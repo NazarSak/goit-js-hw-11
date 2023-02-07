@@ -3,13 +3,7 @@ export default class LoadMoreBtn {
       this.button = this.getButton(selector);
   
       isHidden && this.hide();
-      /*
-      function foo(){
-          return 1;
-      }
-      false && foo() -> false
-      true && foo() -> 1
-      */
+ 
     }
   
     getButton(selector) {

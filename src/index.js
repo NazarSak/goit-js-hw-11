@@ -1,6 +1,6 @@
 import Notiflix from "notiflix";
 
-import simpleLightbox from "simplelightbox";
+import SimpleLightbox from "simplelightbox";
 
 import SearchImages from "./fetchImages";
 
@@ -27,52 +27,70 @@ const loadMoreBtn = new LoadMoreBtn({
 });
 
 
+
 form.addEventListener("submit",onSubmit)
-loadMoreBtn.button.addEventListener("click", fetchNews);
+loadMoreBtn.button.addEventListener("click", fetchMoreImages);
 
 function onSubmit(e) {
   e.preventDefault();
 
   const form = e.currentTarget;
   searchImages.searchQuery = form.elements.searchinfo.value.trim();
-  clearNewsList();
+ 
+  clearNewsList()
   searchImages.resetPage();
   loadMoreBtn.show();
 
-  fetchNews().finally(() => form.reset());
-  
+
+
+  fetchMoreImages()
 }
 
-function fetchNews() {
+ async function fetchMoreImages() {
   loadMoreBtn.disable();
-  return searchImages
-    .fetchImages()
-    .then(({data }) => {
-      if (data.length === 0) throw new Error("No data");
+try {
+const newSearch = await searchImages.fetchImages()
 
-      return data.reduce(
-        (markup, article) => createMarkup(article) + markup,
-        ""
-      );
-    })
-    .then((markup) => {
-      updateNewsList(markup);
-      loadMoreBtn.enable();
-    })
-    .catch(onError);
+if (newSearch.data.hits.length === 0) {
+  Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+  loadMoreBtn.hide();
+}
+
+else if (newSearch.data.hits.length  < 40) {
+  createMarkup(newSearch.data);
+  loadMoreBtn.hide();
+  Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.")
+}
+ else {
+  createMarkup(newSearch.data)
+  loadMoreBtn.enable();
+ }
+
+
+  
+} catch (err) {
+  onError(err)
+} finally {
+  form.reset()
+}
+  
+  
+   
 }
 
 
 
 
 
-function createMarkup({webformatURL,largeImageURL,tags,likes,views,comments,downloads}) {
-    return `
+function createMarkup({hits}) {
+    const markup = hits.map(({webformatURL,largeImageURL,tags,likes,views,comments,downloads}) => `
     <div class="photo-card">
+    <a class = "gallery-item" href = "${largeImageURL}">
   <img src="${webformatURL}" alt="${tags}" loading="lazy" />
   <div class="info">
     <p class="info-item">
-      <b>${likes}</b>
+      <b>Likes:</b>
+      ${likes}
     </p>
     <p class="info-item">
       <b>${views}</b>
@@ -85,19 +103,36 @@ function createMarkup({webformatURL,largeImageURL,tags,likes,views,comments,down
     </p>
   </div>
 </div>
-    `
+    `).join("");
+    caseImages.insertAdjacentHTML("beforeend",markup) 
+    gallery.refresh()
 }
 
 function clearNewsList() {
   caseImages.innerHTML = "";
 }
 
-function updateNewsList(markup) {
-  caseImages.insertAdjacentHTML("beforeend", markup);
-}
+// function scroll() {
+//   const { height: cardHeight } = document
+//     .querySelector('.gallery')
+//     .firstElementChild.getBoundingClientRect();
+
+//   window.scrollBy({
+//     top: cardHeight * 2,
+//     behavior: 'smooth',
+//   });
+// }
+
 function onError(err) {
     console.error(err);
-    updateNewsList("<p>Articles not found</p>");
-    caseImages.innerHTML = ""
+    clearNewsList()
     Notiflix.Notify.failure("Sorry,there are no images matching your search query.Please try again")
   }
+
+  
+  const gallery = new SimpleLightbox('.gallery a', {
+    captions: true,
+    captionsData: "alt",
+    captionDelay: 250,
+  });
+   
