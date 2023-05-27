@@ -93,14 +93,17 @@ function createMarkup({hits}) {
       ${likes}
     </p>
     <p class="info-item">
-      <b>${views}</b>
+      <b>Views:</b>
+      ${views}
     </p>
     <p class="info-item">
-      <b>${comments}</b>
+      <b>Comments:</b>
+      ${comments}
     </p>
     <p class="info-item">
-      <b>${downloads}</b>
-    </p>
+      <b>Downloads:</b>
+    ${downloads}
+      </p>
   </div>
 </div>
     `).join("");
